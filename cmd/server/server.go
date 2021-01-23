@@ -1,6 +1,6 @@
 package main
 
-import httpX "github.com/Min-Feng/ratelimiter/pkg/http"
+import httpX "github.com/Min-Feng/ratelimiter/pkg/httpX"
 
 func main() {
 	router := httpX.NewRouter("8888")
