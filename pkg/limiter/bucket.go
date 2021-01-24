@@ -7,8 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrExceedMaxCount = errors.New("exceed max count of bucket")
-
 // maxLimitCount is number that allowed per interval.
 // interval reset time
 func newBucket(maxLimitCount int32, interval time.Duration) *bucket {
