@@ -20,31 +20,37 @@ type LocalLimiter struct {
 	interval      time.Duration
 
 	keyCollection sync.Map
-	wg            sync.WaitGroup
 }
 
 func (l *LocalLimiter) Allow(key string) (count int32, err error) {
-	l.wg.Wait()
-	v, ok := l.keyCollection.Load(key)
+	type Getter func() *bucket
+
+	fn, ok := l.keyCollection.Load(key)
 	if ok {
-		return v.(*bucket).allow()
+		oldBucket := fn.(Getter)()
+		return oldBucket.allow()
 	}
 
-	var bk *bucket
-	l.wg.Add(1)
+	var freshBucket *bucket
+	var once sync.Once
+	lazyInit := func() *bucket {
+		once.Do(func() {
+			freshBucket = newBucket(l.maxLimitCount, l.interval)
+		})
+		return freshBucket
+	}
 
-	_, loaded := l.keyCollection.LoadOrStore(key, bk)
+	fn, loaded := l.keyCollection.LoadOrStore(key, Getter(lazyInit))
 	if !loaded {
-		bk = newBucket(l.maxLimitCount, l.interval)
-		l.keyCollection.Store(key, bk)
-		l.wg.Done()
-		return bk.allow()
+		freshBucket = lazyInit()
+
+		// 減少之後 load 時, once 造成的效能差異
+		l.keyCollection.Store(key, Getter(func() *bucket { return freshBucket }))
+		return freshBucket.allow()
 	}
 
-	l.wg.Done()
-	l.wg.Wait()
-	v, _ = l.keyCollection.Load(key)
-	return v.(*bucket).allow()
+	oldBucket := fn.(Getter)() // 已經 loaded 的 函數 Allow(key), 執行從 sync.Map 拿到的函數
+	return oldBucket.allow()
 }
 
 func (l *LocalLimiter) Close(key string) error {
