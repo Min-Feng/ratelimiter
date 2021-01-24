@@ -9,9 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_bucket_allow(t *testing.T) {
+func TestLocalLimiter_Allow_count_successful(t *testing.T) {
 	type result struct {
-		userNumber  int32
 		returnCount int32
 		err         error
 	}
@@ -22,17 +21,15 @@ func Test_bucket_allow(t *testing.T) {
 
 	maxLimitCount := int32(1000)
 	interval := time.Minute
-	bk := newBucket(maxLimitCount, interval)
+	limiter := NewLocalLimiter(maxLimitCount, interval)
 	concurrencyCount := int(maxLimitCount * 2)
 
-	for i := 1; i <= concurrencyCount; i++ {
+	for i := 0; i < concurrencyCount; i++ {
 		wg.Add(1)
-		user := i
 		go func() {
 			defer wg.Done()
-			count, err := bk.allow()
+			count, err := limiter.Allow("ip1")
 			r := result{
-				userNumber:  int32(user),
 				returnCount: count,
 				err:         err,
 			}
@@ -49,12 +46,12 @@ func Test_bucket_allow(t *testing.T) {
 
 	for j := 1; j <= concurrencyCount; j++ {
 		expectedCount := int32(j)
-		assert.Equalf(t, expectedCount, results[j].returnCount, "userNumber=%v", results[j].userNumber)
+		assert.Equal(t, expectedCount, results[j].returnCount)
 		if expectedCount <= maxLimitCount {
-			assert.NoErrorf(t, results[j].err, "userNumber=%v", results[j].userNumber)
+			assert.NoError(t, results[j].err)
 		}
 		if expectedCount > maxLimitCount {
-			assert.Errorf(t, results[j].err, "userNumber=%v", results[j].userNumber)
+			assert.Error(t, results[j].err)
 		}
 	}
 }

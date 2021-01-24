@@ -52,7 +52,7 @@ func (bk *bucket) initResetLimitInterval() {
 	}()
 }
 
-func (bk *bucket) Allow() (count int32, err error) {
+func (bk *bucket) allow() (count int32, err error) {
 	trueValue := int32(1)
 	if bk.isStop == trueValue {
 		err = errors.New("bucket channel is closed")
@@ -66,7 +66,7 @@ func (bk *bucket) Allow() (count int32, err error) {
 	return newCount, nil
 }
 
-func (bk *bucket) Close() {
+func (bk *bucket) close() {
 	trueValue := int32(1)
 	falseValue := int32(0)
 	if atomic.CompareAndSwapInt32(&bk.isStop, falseValue, trueValue) {
