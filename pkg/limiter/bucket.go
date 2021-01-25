@@ -7,44 +7,65 @@ import (
 	"github.com/pkg/errors"
 )
 
-// maxLimitCount is number that allowed per interval.
-// interval reset time
-func newBucket(maxLimitCount int32, interval time.Duration) *bucket {
+type bucketOption struct {
+	maxLimitCount   int32
+	interval        time.Duration
+	expireDuration  time.Duration
+	expireAfterFunc func()
+}
+
+func newBucket(o *bucketOption) *bucket {
 	bk := &bucket{
-		maxLimitCount: maxLimitCount,
-		interval:      interval,
+		maxLimitCount:   o.maxLimitCount,
+		countDuration:   o.interval,
+		expireDuration:  o.expireDuration,
+		expireAfterFunc: o.expireAfterFunc,
 	}
 
-	bk.initResetLimitInterval()
+	bk.init()
 	return bk
 }
 
 type bucket struct {
+	// count logic
 	maxLimitCount int32
-	interval      time.Duration
+	countDuration time.Duration
+	countTicker   *time.Ticker
+	count         int32
 
-	ticker *time.Ticker
-	stop   chan struct{}
-	isStop int32
-
-	count int32
+	// remove logic
+	expireDuration    time.Duration
+	expireAfterFunc   func()
+	expiredTimer      *time.Timer
+	resetExpiredTimer chan struct{}
+	remove            chan struct{}
+	isRemove          int32
 }
 
-func (bk *bucket) initResetLimitInterval() {
-	stop := make(chan struct{})
-	ticker := time.NewTicker(bk.interval)
+func (bk *bucket) init() {
+	bk.countTicker = time.NewTicker(bk.countDuration)
 
-	bk.stop = stop
-	bk.ticker = ticker
+	bk.expiredTimer = time.AfterFunc(bk.expireDuration, bk.expireAfterFunc)
+	bk.resetExpiredTimer = make(chan struct{})
+
+	bk.remove = make(chan struct{})
 
 	go func() {
 		for {
 			select {
-			case <-stop:
-				ticker.Stop()
-				return
-			case <-ticker.C:
+			case <-bk.countTicker.C:
 				atomic.StoreInt32(&bk.count, 0)
+
+			case <-bk.expiredTimer.C:
+				bk.delete()
+			case <-bk.resetExpiredTimer:
+				bk.expiredTimer.Reset(bk.expireDuration)
+
+			case <-bk.remove:
+				bk.expireAfterFunc()
+				bk.countTicker.Stop()
+				bk.expiredTimer.Stop()
+				return
 			}
 		}
 	}()
@@ -52,7 +73,7 @@ func (bk *bucket) initResetLimitInterval() {
 
 func (bk *bucket) allow() (count int32, err error) {
 	trueValue := int32(1)
-	if bk.isStop == trueValue {
+	if bk.isRemove == trueValue {
 		err = errors.New("bucket channel is closed")
 		return
 	}
@@ -61,14 +82,15 @@ func (bk *bucket) allow() (count int32, err error) {
 	if newCount > bk.maxLimitCount {
 		return newCount, ErrExceedMaxCount
 	}
+	bk.resetExpiredTimer <- struct{}{}
 	return newCount, nil
 }
 
-func (bk *bucket) close() {
+func (bk *bucket) delete() {
 	trueValue := int32(1)
 	falseValue := int32(0)
-	if atomic.CompareAndSwapInt32(&bk.isStop, falseValue, trueValue) {
-		close(bk.stop)
+	if atomic.CompareAndSwapInt32(&bk.isRemove, falseValue, trueValue) {
+		close(bk.remove)
 	}
 	return
 }

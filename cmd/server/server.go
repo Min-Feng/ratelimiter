@@ -1,9 +1,15 @@
 package main
 
-import httpX "github.com/Min-Feng/ratelimiter/pkg/httpX"
+import (
+	"github.com/Min-Feng/ratelimiter/pkg/configs"
+	httpX "github.com/Min-Feng/ratelimiter/pkg/httpX"
+)
 
 func main() {
-	router := httpX.NewRouter("8888")
-	httpX.RegisterPath(router)
+	cfg := configs.New("config")
+	// spew.Dump(cfg)
+
+	router := httpX.NewRouter(cfg.Port)
+	httpX.RegisterPath(cfg.Limiter, router)
 	router.QuickRun()
 }

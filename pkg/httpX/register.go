@@ -1,8 +1,11 @@
 package httpX
 
-import "time"
+import (
+	"github.com/Min-Feng/ratelimiter/pkg/configs"
+)
 
-func RegisterPath(r *Router) {
-	r.router.Use(LimitIPAccessCount(10, 10*time.Second))
+func RegisterPath(cfg configs.Limiter, r *Router) {
+	rateLimiterMiddleware := LimitIPAccessCount(cfg.MaxLimitCount, cfg.ResetCountInterval())
+	r.router.Use(rateLimiterMiddleware)
 	r.router.GET("/hello", Hello)
 }

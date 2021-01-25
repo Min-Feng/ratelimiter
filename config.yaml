@@ -1,5 +1,6 @@
-port: 8888
+port: "8888"
 
-ratelimter_kind: "local" # [local, global]
-
-redis:
+rate_limiter:
+  max_limit_count: 5
+  reset_count_interval: 10 # seconds
+  remove_interval: 1 # hour

@@ -20,10 +20,15 @@ func Test_bucket_allow(t *testing.T) {
 	var results = make([]result, 1)
 	var wg sync.WaitGroup
 
-	maxLimitCount := int32(1000)
 	interval := time.Minute
-	bk := newBucket(maxLimitCount, interval)
-	concurrencyCount := int(maxLimitCount * 2)
+	option := &bucketOption{
+		maxLimitCount:   int32(1000),
+		interval:        interval,
+		expireDuration:  time.Minute,
+		expireAfterFunc: func() {},
+	}
+	bk := newBucket(option)
+	concurrencyCount := int(option.maxLimitCount * 2)
 
 	for i := 1; i <= concurrencyCount; i++ {
 		wg.Add(1)
@@ -50,10 +55,10 @@ func Test_bucket_allow(t *testing.T) {
 	for j := 1; j <= concurrencyCount; j++ {
 		expectedCount := int32(j)
 		assert.Equalf(t, expectedCount, results[j].returnCount, "userNumber=%v", results[j].userNumber)
-		if expectedCount <= maxLimitCount {
+		if expectedCount <= int32(1000) {
 			assert.NoErrorf(t, results[j].err, "userNumber=%v", results[j].userNumber)
 		}
-		if expectedCount > maxLimitCount {
+		if expectedCount > int32(1000) {
 			assert.Errorf(t, results[j].err, "userNumber=%v", results[j].userNumber)
 		}
 	}
