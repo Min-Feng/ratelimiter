@@ -2,12 +2,14 @@ package main
 
 import (
 	"github.com/Min-Feng/ratelimiter/pkg/configs"
-	httpX "github.com/Min-Feng/ratelimiter/pkg/httpX"
+	"github.com/Min-Feng/ratelimiter/pkg/httpX"
+	"github.com/Min-Feng/ratelimiter/pkg/limiter"
 )
 
 func main() {
 	cfg := configs.New("config")
-	router := httpX.NewRouter(cfg.Port)
-	httpX.RegisterPath(cfg.Limiter, router)
+	rateLimiter := limiter.NewLocalLimiter(cfg.Limiter.MaxLimitCount, cfg.Limiter.ResetCountInterval())
+	router := httpX.NewRouter(&cfg, rateLimiter)
+	httpX.RegisterPath(router)
 	router.QuickRun()
 }

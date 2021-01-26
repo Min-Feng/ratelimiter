@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Min-Feng/ratelimiter/pkg/configs"
+	"github.com/Min-Feng/ratelimiter/pkg/limiter"
 )
 
 func Test_LimitIPAccessCount(t *testing.T) {
@@ -23,38 +24,41 @@ func Test_LimitIPAccessCount(t *testing.T) {
 		},
 	}
 
-	router := NewRouter(cfg.Port)
-	RegisterPath(cfg.Limiter, router)
-	path := "/hello"
+	rateLimiter := limiter.NewLocalLimiter(cfg.Limiter.MaxLimitCount, cfg.Limiter.ResetCountInterval())
+	router := NewRouter(&cfg, rateLimiter)
+	RegisterPath(router)
+	apiPath := "/hello"
 	callCount := 20
 
 	for i := 1; i <= callCount; i++ {
-		response, status := HTTPResponse(router, http.MethodGet, path, nil)
-
+		response, status := HTTPResponse(router, http.MethodGet, apiPath, nil)
 		if int32(i) <= cfg.Limiter.MaxLimitCount {
-			expectedResp := fmt.Sprintf("count: %v\nhello 192.0.2.1\n", i)
-			assert.Equal(t, expectedResp, response)
-
-			expectedStatus := http.StatusOK
-			assert.Equal(t, expectedStatus, status)
+			expectedCount := i
+			ExpectedAccessEndpointOK200(t, response, status, expectedCount)
 			continue
 		}
-
-		expectedResp := "Error: ip=192.0.2.1 too many request\n"
-		assert.Equal(t, expectedResp, response)
-
-		expectedStatus := http.StatusTooManyRequests
-		assert.Equal(t, expectedStatus, status)
+		ExpectedAccessEndpointTooManyRequest429(t, response, status)
 	}
 
 	time.Sleep(cfg.Limiter.ResetCountInterval())
-	response, status := HTTPResponse(router, http.MethodGet, path, nil)
+	response, status := HTTPResponse(router, http.MethodGet, apiPath, nil)
+	ExpectedAccessEndpointOK200(t, response, status, 1)
+}
 
-	expectedResp := fmt.Sprintf("count: %v\nhello 192.0.2.1\n", 1)
-	assert.Equal(t, expectedResp, response)
+func ExpectedAccessEndpointOK200(t *testing.T, actualResponse string, actualStatus int, expectedCount int) {
+	expectedResp := fmt.Sprintf("count: %v\nhello 192.0.2.1\n", expectedCount)
+	assert.Equal(t, expectedResp, actualResponse)
 
 	expectedStatus := http.StatusOK
-	assert.Equal(t, expectedStatus, status)
+	assert.Equal(t, expectedStatus, actualStatus)
+}
+
+func ExpectedAccessEndpointTooManyRequest429(t *testing.T, actualResponse string, actualStatus int) {
+	expectedResp := "Error: ip=192.0.2.1 too many request\n"
+	assert.Equal(t, expectedResp, actualResponse)
+
+	expectedStatus := http.StatusTooManyRequests
+	assert.Equal(t, expectedStatus, actualStatus)
 }
 
 func HTTPResponse(router http.Handler, httpMethod string, url string, body io.Reader) (resp string, status int) {

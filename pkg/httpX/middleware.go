@@ -3,7 +3,6 @@ package httpX
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -11,9 +10,7 @@ import (
 	"github.com/Min-Feng/ratelimiter/pkg/limiter"
 )
 
-func LimitIPAccessCount(maxLimitCount int32, interval time.Duration) gin.HandlerFunc {
-	rateLimiter := limiter.NewLocalLimiter(maxLimitCount, interval)
-
+func LimitIPAccessCountMiddleware(rateLimiter limiter.Limiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
 		count, err := rateLimiter.Allow(ip)

@@ -4,17 +4,22 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/Min-Feng/ratelimiter/pkg/configs"
+	"github.com/Min-Feng/ratelimiter/pkg/limiter"
 )
 
-func NewRouter(port string) *Router {
+func NewRouter(cfg *configs.Config, limiter limiter.Limiter) *Router {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 	router := gin.New()
-	router.Use(gin.Recovery())
+
+	limiterMiddleware := LimitIPAccessCountMiddleware(limiter)
+	router.Use(gin.Recovery(), gin.Logger(), limiterMiddleware)
 
 	return &Router{
 		router: router,
-		addr:   ":" + port,
+		addr:   ":" + cfg.Port,
 	}
 }
 
