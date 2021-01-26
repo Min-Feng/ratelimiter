@@ -9,7 +9,7 @@ func NewLocalLimiter(maxLimitCount int32, interval time.Duration) *LocalLimiter 
 	return &LocalLimiter{
 		maxLimitCount:      maxLimitCount,
 		resetCountInterval: interval,
-		keyExpireDuration:  time.Hour,
+		keyExpireDuration:  2 * interval,
 	}
 }
 
@@ -20,9 +20,9 @@ type LocalLimiter struct {
 	keyExpireDuration  time.Duration
 }
 
-func (l *LocalLimiter) Allow(key string) (count int32, err error) {
-	type Getter func() *bucket
+type Getter func() *bucket
 
+func (l *LocalLimiter) Allow(key string) (count int32, err error) {
 	fn, ok := l.keyCollection.Load(key)
 	if ok {
 		oldBucket := fn.(Getter)()
@@ -61,8 +61,6 @@ func (l *LocalLimiter) Allow(key string) (count int32, err error) {
 }
 
 func (l *LocalLimiter) Delete(key string) error {
-	type Getter func() *bucket
-
 	fn, ok := l.keyCollection.Load(key)
 	if !ok {
 		return nil

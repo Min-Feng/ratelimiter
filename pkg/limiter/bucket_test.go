@@ -55,10 +55,10 @@ func Test_bucket_allow(t *testing.T) {
 	for j := 1; j <= concurrencyCount; j++ {
 		expectedCount := int32(j)
 		assert.Equalf(t, expectedCount, results[j].returnCount, "userNumber=%v", results[j].userNumber)
-		if expectedCount <= int32(1000) {
+		if expectedCount <= option.maxLimitCount {
 			assert.NoErrorf(t, results[j].err, "userNumber=%v", results[j].userNumber)
 		}
-		if expectedCount > int32(1000) {
+		if expectedCount > option.maxLimitCount {
 			assert.Errorf(t, results[j].err, "userNumber=%v", results[j].userNumber)
 		}
 	}

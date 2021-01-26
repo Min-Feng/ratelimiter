@@ -15,16 +15,12 @@ import (
 )
 
 func Test_LimitIPAccessCount(t *testing.T) {
-	cfg := configs.Config{
-		Port: "8888",
-		Limiter: configs.Limiter{
-			MaxLimitCount:             10,
-			ResetCountIntervalSeconds: 2,
-			RemoveIntervalHour:        1,
-		},
-	}
+	cfg := configs.New("config")
+	cfg.Port = "8888"
+	cfg.Limiter.MaxLimitCount = 10
+	cfg.Limiter.ResetCountIntervalSeconds = 1
 
-	rateLimiter := limiter.NewLocalLimiter(cfg.Limiter.MaxLimitCount, cfg.Limiter.ResetCountInterval())
+	rateLimiter := limiter.New(&cfg, "redis")
 	router := NewRouter(&cfg, rateLimiter)
 	RegisterPath(router)
 	apiPath := "/hello"

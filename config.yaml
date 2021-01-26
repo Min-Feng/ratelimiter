@@ -1,6 +1,10 @@
 port: "8888"
 
 rate_limiter:
-  max_limit_count: 5
-  reset_count_interval: 10 # seconds
-  remove_interval: 1 # hour
+  max_limit_count: 60
+  reset_count_interval: 60 # seconds
+
+redis:
+  host: "127.0.0.1"
+  port: "6379"
+  password: ""

@@ -50,12 +50,12 @@ func New(fileName string) Config {
 type Config struct {
 	Port    string  `configs:"port"`
 	Limiter Limiter `configs:"rate_limiter"`
+	Redis   Redis   `configs:"redis"`
 }
 
 type Limiter struct {
 	MaxLimitCount             int32 `configs:"max_limit_count"`
 	ResetCountIntervalSeconds int64 `configs:"reset_count_interval"`
-	RemoveIntervalHour        int64 `configs:"remove_interval"`
 }
 
 func (l *Limiter) ResetCountInterval() time.Duration {
@@ -64,4 +64,14 @@ func (l *Limiter) ResetCountInterval() time.Duration {
 
 func (l *Limiter) RemoveInterval() time.Duration {
 	return time.Duration(l.ResetCountIntervalSeconds) * time.Hour
+}
+
+type Redis struct {
+	Host     string `configs:"host"`
+	Port     string `configs:"port"`
+	Password string `configs:"password"`
+}
+
+func (r *Redis) Address() string {
+	return r.Host + ":" + r.Port
 }
