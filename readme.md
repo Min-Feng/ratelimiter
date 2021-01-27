@@ -9,7 +9,7 @@ go run ./cmd/server/server.go
 ## test
 
 ```bash
-curl --location --request GET 'http://127.0.0.1:8888/hello'
+curl --location --request GET 'http://127.0.0.1:88168/hello'
 ```
 
 ## config file

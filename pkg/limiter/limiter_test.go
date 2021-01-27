@@ -42,7 +42,7 @@ func limiterTestTemplate(t *testing.T, cfg configs.Config, limiter Limiter) {
 
 	maxLimitCount := cfg.Limiter.MaxLimitCount
 	concurrencyCount := int(maxLimitCount * 2)
-	key := "192.168.8.1"
+	key := "192.0.2.1"
 
 	for i := 0; i < concurrencyCount; i++ {
 		wg.Add(1)

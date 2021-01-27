@@ -92,5 +92,4 @@ func (bk *bucket) delete() {
 	if atomic.CompareAndSwapInt32(&bk.isRemove, falseValue, trueValue) {
 		close(bk.remove)
 	}
-	return
 }

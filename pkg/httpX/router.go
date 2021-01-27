@@ -15,7 +15,8 @@ func NewRouter(cfg *configs.Config, limiter limiter.Limiter) *Router {
 	router := gin.New()
 
 	limiterMiddleware := LimitIPAccessCountMiddleware(limiter)
-	router.Use(gin.Recovery(), gin.Logger(), limiterMiddleware)
+	// router.Use(gin.Recovery(), gin.Logger(), limiterMiddleware)
+  router.Use(gin.Recovery(), limiterMiddleware)
 
 	return &Router{
 		router: router,

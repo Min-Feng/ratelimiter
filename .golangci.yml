@@ -27,7 +27,6 @@ linters:
     - scopelint
     - stylecheck
     - misspell
-    - gomnd
     - gosec
     - gochecknoglobals
     - deadcode
@@ -41,6 +40,10 @@ linters:
     - goimports
     - gocognit
     - gocyclo
+    - goconst
+    - unconvert
+    # - gomnd
+    # - errcheck
 
 issues:
   # Show only new issues: if there are unstaged changes or untracked files,
@@ -78,17 +81,24 @@ issues:
 
     - linters:
         - golint
-      text: "a blank import"
-
-    - linters:
-        - golint
         - stylecheck
       text: "comment on exported var"
 
     - linters:
         - golint
-      text: "returns unexported"
+        - stylecheck
+      text: "use MixedCaps in package name"
 
     - linters:
         - govet
       text: "composite literal uses unkeyed fields"
+
+    - linters:
+        - golint
+      text: "a blank import"
+
+    - linters:
+        - golint
+      text: "returns unexported"
+
+

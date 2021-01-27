@@ -16,15 +16,15 @@ import (
 
 func Test_LimitIPAccessCount(t *testing.T) {
 	cfg := configs.New("config")
-	cfg.Port = "8888"
-	cfg.Limiter.MaxLimitCount = 10
-	cfg.Limiter.ResetCountIntervalSeconds = 1
+	cfg.Port = "8168"
+	cfg.Limiter.MaxLimitCount = 50
+	cfg.Limiter.ResetCountIntervalSeconds = 3
 
-	rateLimiter := limiter.New(&cfg, "redis")
+	rateLimiter := limiter.New(&cfg, "local")
 	router := NewRouter(&cfg, rateLimiter)
 	RegisterPath(router)
 	apiPath := "/hello"
-	callCount := 20
+	callCount := int(cfg.Limiter.MaxLimitCount + 10)
 
 	for i := 1; i <= callCount; i++ {
 		response, status := HTTPResponse(router, http.MethodGet, apiPath, nil)
@@ -38,7 +38,8 @@ func Test_LimitIPAccessCount(t *testing.T) {
 
 	time.Sleep(cfg.Limiter.ResetCountInterval())
 	response, status := HTTPResponse(router, http.MethodGet, apiPath, nil)
-	ExpectedAccessEndpointOK200(t, response, status, 1)
+  expectedCount := 1
+	ExpectedAccessEndpointOK200(t, response, status, expectedCount)
 }
 
 func ExpectedAccessEndpointOK200(t *testing.T, actualResponse string, actualStatus int, expectedCount int) {
@@ -57,10 +58,12 @@ func ExpectedAccessEndpointTooManyRequest429(t *testing.T, actualResponse string
 	assert.Equal(t, expectedStatus, actualStatus)
 }
 
-func HTTPResponse(router http.Handler, httpMethod string, url string, body io.Reader) (resp string, status int) {
+func HTTPResponse(router http.Handler, httpMethod string, path string, body io.Reader) (respBody string, status int) {
 	wRecorder := httptest.NewRecorder()
-	req := httptest.NewRequest(httpMethod, url, body)
+	req := httptest.NewRequest(httpMethod, path, body)
 	router.ServeHTTP(wRecorder, req)
-	actualBody := string(wRecorder.Body.Bytes())
-	return actualBody, wRecorder.Result().StatusCode
+
+	resp := wRecorder.Result()
+  defer resp.Body.Close()
+	return wRecorder.Body.String(), resp.StatusCode
 }
