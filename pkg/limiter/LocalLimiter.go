@@ -56,7 +56,7 @@ func (l *LocalLimiter) Allow(key string) (count int32, err error) {
 		return freshBucket.allow()
 	}
 
-	oldBucket := fn.(getBucket)() // 已經 loaded 的 函數 Allow(key), 執行從 sync.Map 拿到的函數
+	oldBucket := fn.(getBucket)() // 執行從 sync.Map 拿到的函數
 	return oldBucket.allow()
 }
 
