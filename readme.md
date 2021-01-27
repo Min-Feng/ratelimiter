@@ -11,7 +11,7 @@
   - [rate limiter server](#rate-limiter-server)
     - [local](#local)
     - [redis](#redis)
-    - [command](#command)
+    - [server run command](#server-run-command)
   - [test](#test)
     - [middleware test](#middleware-test)
     - [limiter test](#limiter-test)
@@ -80,7 +80,7 @@ docker-compose -f ./deploy/redis/docker-compose.yml down -v
   大多是在 user space 進行 記憶體操作  
   response 速度快  
 
-### command
+### server run command
 
 ```bash
 LimiterKind=local go run ./cmd/server/server.go
@@ -159,7 +159,7 @@ chmod 744 ./manual_test.sh
 ## 範例圖片
 
 單一 server 後台執行  
-8 個 client 發送 request  
+8 個 client 同時發送 10 個 request 共 80 次  
 
 ```yaml
 # 相關參數
