@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/Min-Feng/ratelimiter/pkg/configs"
@@ -10,8 +11,16 @@ import (
 
 func main() {
 	cfg := configs.New("config")
-	rateLimiter := limiter.New(&cfg, os.Getenv("LimiterKind"))
+	kind := os.Getenv("LimiterKind")
+	if kind == "" {
+		kind = "local"
+	}
+	fmt.Printf("limiter kind=%v\n", kind)
+
+	rateLimiter := limiter.New(&cfg, kind)
 	router := httpX.NewRouter(&cfg, rateLimiter)
 	httpX.RegisterPath(router)
+
+	fmt.Println("server start")
 	router.QuickRun()
 }

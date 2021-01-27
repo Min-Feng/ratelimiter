@@ -22,8 +22,8 @@ func New(fileName string) Config {
 	}
 
 	configPath := ""
-	moduleDirectory := []string{"ratelimiter"}
-	for _, dir := range moduleDirectory {
+	moduleDir := []string{"ratelimiter"}
+	for _, dir := range moduleDir {
 		if strings.Contains(workDir, dir) {
 			path := strings.Split(workDir, dir)
 			configPath = path[0] + dir
@@ -60,10 +60,6 @@ type Limiter struct {
 
 func (l *Limiter) ResetCountInterval() time.Duration {
 	return time.Duration(l.ResetCountIntervalSeconds) * time.Second
-}
-
-func (l *Limiter) RemoveInterval() time.Duration {
-	return time.Duration(l.ResetCountIntervalSeconds) * time.Hour
 }
 
 type Redis struct {

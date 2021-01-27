@@ -20,12 +20,12 @@ type LocalLimiter struct {
 	keyExpireDuration  time.Duration
 }
 
-type Getter func() *bucket
+type getBucket func() *bucket
 
 func (l *LocalLimiter) Allow(key string) (count int32, err error) {
 	fn, ok := l.keyCollection.Load(key)
 	if ok {
-		oldBucket := fn.(Getter)()
+		oldBucket := fn.(getBucket)()
 		return oldBucket.allow()
 	}
 
@@ -47,16 +47,16 @@ func (l *LocalLimiter) Allow(key string) (count int32, err error) {
 		return freshBucket
 	}
 
-	fn, loaded := l.keyCollection.LoadOrStore(key, Getter(lazyInit))
+	fn, loaded := l.keyCollection.LoadOrStore(key, getBucket(lazyInit))
 	if !loaded {
 		freshBucket = lazyInit()
 
 		// 減少之後 load 時, once 造成的效能差異
-		l.keyCollection.Store(key, Getter(func() *bucket { return freshBucket }))
+		l.keyCollection.Store(key, getBucket(func() *bucket { return freshBucket }))
 		return freshBucket.allow()
 	}
 
-	oldBucket := fn.(Getter)() // 已經 loaded 的 函數 Allow(key), 執行從 sync.Map 拿到的函數
+	oldBucket := fn.(getBucket)() // 已經 loaded 的 函數 Allow(key), 執行從 sync.Map 拿到的函數
 	return oldBucket.allow()
 }
 
@@ -67,7 +67,7 @@ func (l *LocalLimiter) Delete(key string) error {
 	}
 
 	l.keyCollection.Delete(key)
-	oldBucket := fn.(Getter)()
+	oldBucket := fn.(getBucket)()
 	oldBucket.delete()
 	return nil
 }

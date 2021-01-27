@@ -1,0 +1,29 @@
+version: "3.4"
+
+services:
+  redis:
+    image: redis:5.0.7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+    # sudo sysctl -w vm.overcommit_memory="1"
+    # echo 'never' | sudo tee /sys/kernel/mm/transparent_hugepage/enabled
+    sysctls:
+      net.core.somaxconn: 1024
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "10"
+    command:
+      ["redis-server", "/usr/local/etc/redis/redis.conf", "--appendonly yes"]
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data:/data
+      - ./etc/5.0/redis.conf:/usr/local/etc/redis/redis.conf
+
+volumes:
+  data:
+    name: redis_data
