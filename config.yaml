@@ -1,8 +1,8 @@
-port: "88168"
+port: "8816"
 
 rate_limiter:
-  max_limit_count: 60
-  reset_count_interval: 60 # seconds
+  max_limit_count: 50
+  reset_count_interval: 2 # seconds
 
 redis:
   host: "127.0.0.1"

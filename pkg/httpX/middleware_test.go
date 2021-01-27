@@ -16,12 +16,13 @@ import (
 
 func Test_LimitIPAccessCount(t *testing.T) {
 	cfg := configs.New("config")
-	cfg.Port = "8168"
+	cfg.Port = "7767"
 	cfg.Limiter.MaxLimitCount = 50
 	cfg.Limiter.ResetCountIntervalSeconds = 3
 
 	rateLimiter := limiter.New(&cfg, "local")
-	router := NewRouter(&cfg, rateLimiter)
+	router := NewRouter(&cfg)
+	router.gin.Use(LimitIPAccessCountMiddleware(rateLimiter))
 	RegisterPath(router)
 	apiPath := "/hello"
 	callCount := int(cfg.Limiter.MaxLimitCount + 10)
@@ -38,7 +39,7 @@ func Test_LimitIPAccessCount(t *testing.T) {
 
 	time.Sleep(cfg.Limiter.ResetCountInterval())
 	response, status := HTTPResponse(router, http.MethodGet, apiPath, nil)
-  expectedCount := 1
+	expectedCount := 1
 	ExpectedAccessEndpointOK200(t, response, status, expectedCount)
 }
 
@@ -64,6 +65,6 @@ func HTTPResponse(router http.Handler, httpMethod string, path string, body io.R
 	router.ServeHTTP(wRecorder, req)
 
 	resp := wRecorder.Result()
-  defer resp.Body.Close()
+	defer resp.Body.Close()
 	return wRecorder.Body.String(), resp.StatusCode
 }

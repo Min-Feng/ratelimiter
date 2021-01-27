@@ -9,30 +9,34 @@ import (
 	"github.com/Min-Feng/ratelimiter/pkg/limiter"
 )
 
-func NewRouter(cfg *configs.Config, limiter limiter.Limiter) *Router {
+func NewDefaultRouter(cfg *configs.Config, limiter limiter.Limiter) *Router {
+	r := NewRouter(cfg)
+	limiterMiddleware := LimitIPAccessCountMiddleware(limiter)
+	r.gin.Use(gin.Logger(), limiterMiddleware)
+	return r
+}
+
+func NewRouter(cfg *configs.Config) *Router {
 	gin.SetMode(gin.ReleaseMode)
 	gin.DisableConsoleColor()
 	router := gin.New()
-
-	limiterMiddleware := LimitIPAccessCountMiddleware(limiter)
-	// router.Use(gin.Recovery(), gin.Logger(), limiterMiddleware)
-  router.Use(gin.Recovery(), limiterMiddleware)
+	router.Use(gin.Recovery())
 
 	return &Router{
-		router: router,
-		addr:   ":" + cfg.Port,
+		gin:  router,
+		addr: ":" + cfg.Port,
 	}
 }
 
 type Router struct {
-	router *gin.Engine
-	addr   string
+	gin  *gin.Engine
+	addr string
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.router.ServeHTTP(w, req)
+	r.gin.ServeHTTP(w, req)
 }
 
 func (r *Router) QuickRun() error {
-	return r.router.Run(r.addr)
+	return r.gin.Run(r.addr)
 }

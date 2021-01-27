@@ -18,7 +18,7 @@ func main() {
 	fmt.Printf("limiter kind=%v\n", kind)
 
 	rateLimiter := limiter.New(&cfg, kind)
-	router := httpX.NewRouter(&cfg, rateLimiter)
+	router := httpX.NewDefaultRouter(&cfg, rateLimiter)
 	httpX.RegisterPath(router)
 
 	fmt.Println("server start")

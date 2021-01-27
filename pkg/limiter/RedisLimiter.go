@@ -63,9 +63,8 @@ func (r *RedisLimiter) resetCountManager() {
 	type redisKey = string
 	type keyCloseNotify = chan struct{}
 
-
 	go func() {
-    manager := make(map[redisKey]keyCloseNotify)
+		manager := make(map[redisKey]keyCloseNotify)
 		for {
 			select {
 			case k := <-r.enableResetCount:
