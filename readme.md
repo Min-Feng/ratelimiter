@@ -1,7 +1,16 @@
 # tutorial
 
+## 需求敘述
+
+實作⼀個 server 並滿⾜以下要求：
+
+- 每個 IP 每分鐘僅能接受 60 個 requests
+- 在⾸⾴顯⽰⽬前的 request 量，超過限制的話則顯⽰ “Error”，例如在⼀分鐘內第 30 個 request 則顯⽰ 30，第 61 個 request 則顯⽰ Error 
+
 以下命令  
 請都在專案根目錄進行操作  
+
+## 目錄
 
 - [tutorial](#tutorial)
   - [config file](#config-file)
